@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MealPlan</title>
+<style>
+:root{--bg:#fafaf9;--fg:#18181b;--card:#fff;--line:#deddd8;--acc:#2a78d6}
+body.dark{--bg:#18181b;--fg:#f4f4f5;--card:#27272a;--line:#3f3f46}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,sans-serif;background:var(--bg);color:var(--fg)}
+header{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line)}
+h1{margin:0;font-size:22px}main{display:grid;grid-template-columns:280px 1fr 280px;gap:16px;padding:16px}
+@media(max-width:900px){main{grid-template-columns:1fr}}
+section{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px}
+input,textarea,select,button{font:inherit;padding:6px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--fg)}
+textarea,input[type=text],select{width:100%}button{cursor:pointer}button.p{background:var(--acc);color:#fff;border:0}
+table{width:100%;border-collapse:collapse}td,th{border:1px solid var(--line);padding:4px;font-size:13px}
+li.done{text-decoration:line-through;opacity:.6}.meal{display:flex;justify-content:space-between;margin:4px 0}
+</style></head><body>
+<header><h1>MealPlan</h1><div><button id="dark">Dark mode</button> <button id="exp">Export backup</button> <button id="impb">Import backup</button><input type="file" id="imp" accept=".json" hidden></div></header>
+<main>
+<section><h2>Meals</h2><input type="text" id="mname" placeholder="Meal name"><textarea id="ming" rows="5" placeholder="Ingredients, one per line&#10;2 eggs&#10;200 g rice"></textarea><button class="p" id="add">Save meal</button> <button id="starter">Add starter meals</button><div id="meals"></div></section>
+<section><h2>This week</h2><table id="plan"></table><button id="clear">Clear week</button></section>
+<section><h2>Grocery list</h2><ul id="groc"></ul><button id="copy">Copy list</button></section>
+</main>
+<script>
+const DAYS=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],SLOTS=['Breakfast','Lunch','Dinner'];
+let S=JSON.parse(localStorage.getItem('mealplan')||'null')||{meals:[],plan:{},got:{},dark:false};
+const $=id=>document.getElementById(id);
+const save=()=>{localStorage.setItem('mealplan',JSON.stringify(S));render()};
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function parse(line){const m=line.trim().match(/^(\d+(?:\.\d+)?)\s*(g|kg|ml|l|cups?|tbsp|tsp|oz|lb)?\s+(.+)$/i);
+return m?{q:parseFloat(m[1]),u:(m[2]||'').toLowerCase(),n:m[3].toLowerCase()}:{q:null,u:'',n:line.trim().toLowerCase()}}
+function grocery(){const t={};for(const k in S.plan){const meal=S.meals.find(x=>x.id==S.plan[k]);if(!meal)continue;
+for(const l of meal.ing){if(!l.trim())continue;const p=parse(l),key=p.n+'|'+p.u;t[key]=t[key]||{n:p.n,u:p.u,q:0};if(p.q!==null)t[key].q+=p.q}}
+return Object.values(t).sort((a,b)=>a.n.localeCompare(b.n)).map(i=>(i.q?(+i.q.toFixed(2))+(i.u?' '+i.u:'')+' ':'')+i.n)}
+function render(){document.body.classList.toggle('dark',S.dark);
+$('meals').innerHTML=S.meals.map(m=>`<div class="meal"><span title="${esc(m.ing.join(', '))}">${esc(m.name)}</span><button data-del="${m.id}">x</button></div>`).join('')||'<p>No meals yet.</p>';
+let h='<tr><th></th>'+SLOTS.map(s=>`<th>${s}</th>`).join('')+'</tr>';
+for(const d of DAYS){h+=`<tr><th>${d}</th>`+SLOTS.map(s=>{const k=d+'-'+s;return `<td><select data-k="${k}"><option value="">-</option>`+S.meals.map(m=>`<option value="${m.id}" ${S.plan[k]==m.id?'selected':''}>${esc(m.name)}</option>`).join('')+'</select></td>'}).join('')+'</tr>'}
+$('plan').innerHTML=h;const g=grocery();
+$('groc').innerHTML=g.map(i=>`<li class="${S.got[i]?'done':''}"><label><input type="checkbox" data-g="${esc(i)}" ${S.got[i]?'checked':''}> ${esc(i)}</label></li>`).join('')||'<p>Plan some meals to build your list.</p>'}
+$('add').onclick=()=>{const n=$('mname').value.trim();if(!n)return alert('Give the meal a name');S.meals.push({id:Date.now(),name:n,ing:$('ming').value.split('\n').filter(x=>x.trim())});$('mname').value='';$('ming').value='';save()};
+$('starter').onclick=()=>{[['Oatmeal','80 g oats\n250 ml milk\n1 banana'],['Chicken salad','200 g chicken\n1 lettuce\n2 tomatoes'],['Pasta bolognese','200 g pasta\n250 g beef mince\n400 g tomato sauce'],['Veggie stir fry','200 g rice\n1 pepper\n150 g tofu\n2 tbsp soy sauce']].forEach((m,i)=>S.meals.push({id:Date.now()+i,name:m[0],ing:m[1].split('\n')}));save()};
+$('meals').onclick=e=>{const id=e.target.dataset.del;if(!id)return;S.meals=S.meals.filter(m=>m.id!=id);for(const k in S.plan)if(S.plan[k]==id)delete S.plan[k];save()};
+$('plan').onchange=e=>{const k=e.target.dataset.k;if(e.target.value)S.plan[k]=e.target.value;else delete S.plan[k];save()};
+$('groc').onchange=e=>{const g=e.target.dataset.g;if(g!==undefined){S.got[g]=e.target.checked;save()}};
+$('clear').onclick=()=>{if(confirm('Clear the whole week?')){S.plan={};S.got={};save()}};
+$('copy').onclick=()=>navigator.clipboard.writeText(grocery().join('\n')).then(()=>alert('Copied'));
+$('dark').onclick=()=>{S.dark=!S.dark;save()};
+$('exp').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(S,null,2)],{type:'application/json'}));a.download='mealplan-backup-'+new Date().toISOString().slice(0,10)+'.json';a.click()};
+$('impb').onclick=()=>$('imp').click();
+$('imp').onchange=e=>{const f=e.target.files[0];if(!f)return;f.text().then(t=>{try{const d=JSON.parse(t);if(!Array.isArray(d.meals))throw 0;if(confirm('Replace your current data with this backup?')){S=Object.assign({plan:{},got:{},dark:false},d);save()}}catch(x){alert('That file is not a MealPlan backup.')}})};
+render();
+</script></body></html>
