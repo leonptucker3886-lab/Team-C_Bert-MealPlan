@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>MealPlan</title>
+<title>MealPlan: Weekly Meal Planner &amp; Grocery List</title>
+<meta name="description" content="Plan your week of meals and get an automatic, combined grocery list. No account, no ads. Your data stays in your browser.">
+<meta property="og:title" content="MealPlan: Weekly Meal Planner"><meta property="og:description" content="Plan your week, get your grocery list built for you."><meta property="og:type" content="website"><meta name="theme-color" content="#2a78d6">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🥗</text></svg>">
 <style>
 :root{--bg:#fafaf9;--fg:#18181b;--card:#fff;--line:#deddd8;--acc:#2a78d6}
 body.dark{--bg:#18181b;--fg:#f4f4f5;--card:#27272a;--line:#3f3f46}
@@ -13,13 +16,16 @@ input,textarea,select,button{font:inherit;padding:6px;border:1px solid var(--lin
 textarea,input[type=text],select{width:100%}button{cursor:pointer}button.p{background:var(--acc);color:#fff;border:0}
 table{width:100%;border-collapse:collapse}td,th{border:1px solid var(--line);padding:4px;font-size:13px}
 li.done{text-decoration:line-through;opacity:.6}.meal{display:flex;justify-content:space-between;margin:4px 0}
+footer{text-align:center;font-size:13px;opacity:.7;padding:8px 16px 24px}
+@media print{header,section:not(.gl),footer{display:none}main{display:block}}
 </style></head><body>
 <header><h1>MealPlan</h1><div><button id="dark">Dark mode</button> <button id="exp">Export backup</button> <button id="impb">Import backup</button><input type="file" id="imp" accept=".json" hidden></div></header>
 <main>
 <section><h2>Meals</h2><input type="text" id="mname" placeholder="Meal name"><textarea id="ming" rows="5" placeholder="Ingredients, one per line&#10;2 eggs&#10;200 g rice"></textarea><button class="p" id="add">Save meal</button> <button id="starter">Add starter meals</button><div id="meals"></div></section>
 <section><h2>This week</h2><table id="plan"></table><button id="clear">Clear week</button></section>
-<section><h2>Grocery list</h2><ul id="groc"></ul><button id="copy">Copy list</button></section>
+<section class="gl"><h2>Grocery list</h2><ul id="groc"></ul><button id="copy">Copy list</button> <button id="print">Print list</button></section>
 </main>
+<footer>MealPlan · $4.99 one-time · No account, no ads. Your meals and lists are saved only in this browser. Use Export backup to keep a copy.</footer>
 <script>
 const DAYS=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],SLOTS=['Breakfast','Lunch','Dinner'];
 let S=JSON.parse(localStorage.getItem('mealplan')||'null')||{meals:[],plan:{},got:{},dark:false};
@@ -44,6 +50,7 @@ $('plan').onchange=e=>{const k=e.target.dataset.k;if(e.target.value)S.plan[k]=e.
 $('groc').onchange=e=>{const g=e.target.dataset.g;if(g!==undefined){S.got[g]=e.target.checked;save()}};
 $('clear').onclick=()=>{if(confirm('Clear the whole week?')){S.plan={};S.got={};save()}};
 $('copy').onclick=()=>navigator.clipboard.writeText(grocery().join('\n')).then(()=>alert('Copied'));
+$('print').onclick=()=>window.print();
 $('dark').onclick=()=>{S.dark=!S.dark;save()};
 $('exp').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(S,null,2)],{type:'application/json'}));a.download='mealplan-backup-'+new Date().toISOString().slice(0,10)+'.json';a.click()};
 $('impb').onclick=()=>$('imp').click();
