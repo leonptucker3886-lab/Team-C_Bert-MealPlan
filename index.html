@@ -18,7 +18,7 @@ table{width:100%;border-collapse:collapse}td,th{border:1px solid var(--line);pad
 li.done{text-decoration:line-through;opacity:.6}.meal{display:flex;justify-content:space-between;margin:4px 0}
 footer{text-align:center;font-size:13px;opacity:.7;padding:8px 16px 24px}
 @media print{header,section:not(.gl),footer{display:none}main{display:block}}
-</style></head><body>
+</style></head><body><div id="betaBanner" style="background:#FFE066;color:#18181B;padding:10px 40px 10px 14px;font:14px system-ui,sans-serif;text-align:center;position:relative;z-index:9999"><b>Beta / testing:</b> this is still in testing. Features may change and data may be lost. Please back up anything important.<button onclick="this.parentNode.remove()" aria-label="Close" style="position:absolute;right:8px;top:6px;background:none;border:0;font-size:18px;cursor:pointer">&times;</button></div>
 <header><h1>MealPlan</h1><div><button id="dark">Dark mode</button> <button id="exp">Export backup</button> <button id="impb">Import backup</button><input type="file" id="imp" accept=".json" hidden></div></header>
 <main>
 <section><h2>Meals</h2><input type="text" id="mname" placeholder="Meal name"><textarea id="ming" rows="5" placeholder="Ingredients, one per line&#10;2 eggs&#10;200 g rice"></textarea><button class="p" id="add">Save meal</button> <button id="starter">Add starter meals</button><div id="meals"></div></section>
